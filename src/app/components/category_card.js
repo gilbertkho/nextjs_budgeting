@@ -12,7 +12,7 @@ const CategoryCard = (props) => {
                 <thead>
                     <tr>
                         <th className='border p-4' style={{width:'60%'}}>Category</th>
-                        <th className='border p-4'>Spendings</th>
+                        <th className='border p-4'>Amount Spent</th>
                     </tr>
                 </thead>
                 <tbody>

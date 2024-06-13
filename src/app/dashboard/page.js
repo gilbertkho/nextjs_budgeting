@@ -5,7 +5,9 @@ import CategoryCard from '../components/category_card';
 import Button from '../components/button';
 
 const Dashboard = () => {
-
+    const checkAction = () => {
+        console.log('MASUK');
+    }
 
     return (
         <div className='p-2'>
@@ -13,11 +15,17 @@ const Dashboard = () => {
             <Button 
                 bg="#39bdf8"
                 color="white"
-                text="+ Add Category"
+                text="Input Spendings"
                 className="rounded-full"
                 onClick = {() => checkAction()}
             />
-            <button className='bg-[#39bdf8] text-white rounded-full px-3 py-2 min-w-[100px]'>+ Add Category</button>
+            <Button 
+                bg="#39bdf8"
+                color="white"
+                text="+ Add Budget Category"
+                className="rounded-full ms-2"
+                onClick = {() => checkAction()}
+            />
             <CategoryCard className='my-2'/>
         </div>
     )
