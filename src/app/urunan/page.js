@@ -4,44 +4,46 @@ import styles from './styles.module.css';
 import UrunanParticipants from '../components/urunan_participants';
 import Discounted from '../components/discounted';
 import ExtraFee from '../components/extra_fee';
+import Participants from '../components/participants';
 
 const Urunan  = () => {
 
-    const [participants, setParticipants] = useState([
-        {
-            name: '',
-            spent: 0
-        }
-    ]);
-
+    const [participants, setParticipants] = useState(['']);
+    const [spent, setSpent] = useState([{
+        name: '',
+        spent: 0,
+    }]);
     const [discounted, setDiscounted] = useState([
         {
             price: 0,
         }
     ]);
-
     const [extraFee, setExtraFee] = useState([
         {
             name: '',
             fee: 0
         }
     ]);
-
     const [total, setTotal] = useState({
         subTotal: 0,
         totalAfterDiscount: 0,
-    });    
-
-
+    });
+    const [payResult, setPayResult] = useState([]);
 
     const addParticipant = () => {
         let arr = [...participants];
+        arr.push('');
+        setParticipants(arr);
+    }
+
+    const addSpendings = () => {
+        let arr = [...spent];
         let newArr =     {
-            name: '',
-            spent: 0
+            name: participants[0],
+            fee: 0
         }
         arr.push(newArr);
-        setParticipants(arr);
+        setSpent(arr);
     }
 
     const addDiscountedPrice = () => {
@@ -73,15 +75,15 @@ const Urunan  = () => {
         console.log('fee', extraFee);
 
         extraFee.forEach((exf, idx) => {
-            feeTotal += parseInt(exf.fee);
+            feeTotal += parseInt(isNaN(exf.fee) ? 0 : exf.fee);
         });
 
-        participants.forEach((par, idx) => {
-            subTotal += parseInt(par.spent);
+        spent.forEach((par, idx) => {
+            subTotal += parseInt(isNaN(par.spent) ? 0 : par.spent);
         });
 
         discounted.forEach((dis,idx) => {
-            total_discount += parseInt(dis.price);
+            total_discount += parseInt(isNaN(dis.price) ? 0 : dis.price);
         });
 
         console.log('feetotal:', feeTotal);
@@ -89,36 +91,46 @@ const Urunan  = () => {
 
         let allPriceAfterDiscount = [];
 
-        setTotal((prevState) => 
-           {
-            return {...prevState, subTotal: subTotal, totalAfterDiscount: totalAfterDiscount }
-           }
-        );
+        setTotal((prevState) => { 
+            return {...prevState, 
+                subTotal: subTotal, 
+                totalAfterDiscount: totalAfterDiscount
+            }
+        });
 
-        participants.forEach((par, idx) => {
-            let percentage = par.spent / subTotal * 100 ;
-            let feePerParticipants = feeTotal / participants.length;
-            let discountPerParticipants = total_discount * percentage / 100;
-            let priceAfterDiscountAndFee = par.spent - discountPerParticipants + feePerParticipants;
+        spent.forEach((par, idx) => {
+            let percentage = par.spent <= 0 ? 0 : par.spent / subTotal * 100;
+            
+            let feePerParticipants = parseInt(feeTotal / participants.length);
+            
+            let discountPerParticipants = parseInt(total_discount * percentage / 100);
+            
+            let priceAfterDiscountAndFee = parseInt(par.spent - discountPerParticipants + feePerParticipants);
+            
             allPriceAfterDiscount.push({
                 name: par.name,
-                pay: priceAfterDiscountAndFee,
+                pay: parseInt(priceAfterDiscountAndFee),
             })
         })
 
-        console.log(allPriceAfterDiscount)
+        setPayResult(allPriceAfterDiscount);
 
-    },[participants, discounted, extraFee])
+    },[participants, discounted, extraFee, spent])
 
     const inputValue = (e, idx, inputType) => {
         let participant = [...participants];
+        let spents = [...spent];
         let discount = [...discounted];
         let fee = [...extraFee];
+
         if(inputType == 'input'){
-            participant[idx].name = e.target.value;
+            participant[idx] = e.target.value;
+        }
+        if(inputType == 'option'){
+            spents[idx].name = e.target.value;
         }
         if(inputType == 'number'){
-            participant[idx].spent = e.target.value;
+            spents[idx].spent = e.target.value;
         }
         if(inputType == 'number_discount'){
             discount[idx].price = e.target.value;
@@ -129,8 +141,13 @@ const Urunan  = () => {
 
         setParticipants(participant);
         setDiscounted(discount);
+        setSpent(spents);
         setExtraFee(fee);
     }
+
+    useEffect(() => {
+        console.log("payRES", payResult);
+    },[payResult])
 
     return (
        <div className={`flex justify-center`}>
@@ -141,13 +158,26 @@ const Urunan  = () => {
                     {
                         participants.map((par, idx) => {
                             return (
-                                <UrunanParticipants key={idx} name={par.name} spent={par.spent} 
-                                onChangeInput={(e) => inputValue(e, idx, 'input')}
-                                onChangeNumber={(e) => inputValue(e, idx, 'number')}/>
+                              <Participants key={idx} value={par} onChangeInput={(e) => inputValue(e, idx, 'input')}/>
                             );
                         })
                     }
                     <button onClick={addParticipant} className={``}>+ Add Participant</button>
+                </div>
+                <p>Spending</p>
+                <small>participants spending</small>
+                <div className={`flex flex-col gap-[8px]`}>
+                    {
+                        spent.map((sp, idx) => {
+                            return (
+                              <UrunanParticipants key={idx} spent={sp.spent} name={sp.name}
+                              participants = {participants}
+                              onChangeInput={(e) => inputValue(e, idx, 'option')} 
+                              onChangeNumber={(e) => inputValue(e, idx, 'number')}/>
+                            );
+                        })
+                    }
+                    <button onClick={addSpendings} className={``}>+ Add Spendings</button>
                 </div>
                 <p>Discount</p>
                 <small>discounted price</small>
@@ -177,6 +207,30 @@ const Urunan  = () => {
                 </div>
                 <p>SubTotal: {total.subTotal}</p>
                 <p>Total After Discount: {total.totalAfterDiscount}</p>
+                {payResult.length > 0 ?
+                    <table className="w-full border-[1px] border-[black]">
+                        <thead>
+                            <tr>
+                                <th style={{width: "50%"}}>Name</th>
+                                <th style={{width: "50%"}}>Pay</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {
+                            payResult.map((all,idx) => {
+                                return(
+                                    <tr key={idx}>
+                                        <td>{all.name}</td>
+                                        <td>{isNaN(all.pay) ? 0 : all.pay}</td>
+                                    </tr>
+                                )
+                            })
+                        }
+                        </tbody>
+                    </table>
+                    : 
+                    null
+                }
             </div>
        </div> 
     )
